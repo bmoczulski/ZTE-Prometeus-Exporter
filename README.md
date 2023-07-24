@@ -9,7 +9,7 @@ Please ensure you have `podman` and `systemd` installed on your system before bu
 ## Step 1: Building the Container Image
 
 Clone this repository and navigate to the directory where the Containerfile and build script is located.
-Now, you can build the container image by running the `build.sh` script:
+Now, you can build the container image by running the `build.sh` script.
 
 ## Step 2: Creating a Systemd User Service
 
