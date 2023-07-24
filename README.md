@@ -15,7 +15,7 @@ Please ensure you have `podman` and `systemd` installed on your system before bu
 
     Create a systemd user service unit file. For example, let's name it `zte_exporter.service`. Open it and paste the following content:
 
-    ```
+    ```ini
     # ZTE Metrics Collector Service
 
     [Unit]
