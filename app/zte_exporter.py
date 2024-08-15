@@ -16,6 +16,7 @@ class EndpointDataFetchError(Exception):
 # Device Credentials
 ZTE_HOSTNAME = os.environ.get('ZTE_HOSTNAME', 'http://192.168.0.1')
 ZTE_PASSWORD = os.environ.get('ZTE_PASSWORD')
+REFRESH_INTERVAL = int(os.environ.get('REFRESH_INTERVAL', '10'))
 
 metrics = {
     'puknumber': Gauge('puknumber', 'PUK number'),
@@ -378,7 +379,7 @@ if __name__ == '__main__':
 
     print("ZTE Exporter for Prometheus has started.")
 
-    # Collect and update the data every 10 seconds
+    # Collect and update the data periodically
     while True:
         collect_data()
-        time.sleep(10)
+        time.sleep(REFRESH_INTERVAL)
