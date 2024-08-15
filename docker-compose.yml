@@ -1,0 +1,12 @@
+services:
+  zte_exporter:
+    container_name: zte_exporter
+    build:
+      context: .
+      dockerfile: ./Containerfile
+      tags:
+        - "zte_exporter:latest"
+    ports:
+      - 11889:8000
+    env_file:
+      - .env
