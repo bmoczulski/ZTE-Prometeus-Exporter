@@ -213,6 +213,8 @@ dev_metrics = Gauge(
     ],
 )
 
+all_metrics = [metric for metric in metrics.values()] + [cell_metrics, wifi_metrics, dev_metrics]
+
 session = requests.Session()
 
 def sha256_encode(string):
@@ -286,10 +288,31 @@ def get_data_from_endpoints():
 
     return data
 
+need_to_register_all_metrics:bool = False
+
+def maybe_register_all_metrics():
+    global need_to_register_all_metrics
+    global all_metrics
+    if need_to_register_all_metrics:
+        for metric in all_metrics:
+            REGISTRY.register(metric)
+    need_to_register_all_metrics = False
+
+def unregister_all_metrics():
+    global need_to_register_all_metrics
+    global all_metrics
+    if not need_to_register_all_metrics:
+        for metric in all_metrics:
+            REGISTRY.unregister(metric)
+        need_to_register_all_metrics = True
+
 def collect_data():
     try:
         login(ZTE_PASSWORD)
         data = get_data_from_endpoints()
+        if not data:
+            unregister_all_metrics()
+            return
 
         cell_metrics.clear()
         cell_metrics.labels(
@@ -376,11 +399,17 @@ def collect_data():
             except Exception as e:
                 print(f'{metric_name} has wrong format: {metric_value}')
                 print(json.dumps(data, indent=4))
+
+        maybe_register_all_metrics()
     except LoginFailedError as e:
+        unregister_all_metrics()
         print(str(e))
     except Exception as e:
+        unregister_all_metrics()
         print(f"An error occurred: {str(e)}")
+
 if __name__ == '__main__':
+    unregister_all_metrics()
     # Start the Prometheus HTTP server
     start_http_server(8000)
 
