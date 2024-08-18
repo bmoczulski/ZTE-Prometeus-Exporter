@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
-from prometheus_client import start_http_server, Gauge, Enum
+from prometheus_client import start_http_server, Gauge, Enum, REGISTRY, GC_COLLECTOR, PLATFORM_COLLECTOR, PROCESS_COLLECTOR
 import requests
 import json
 import hashlib
 import time
 import os
+
+REGISTRY.unregister(GC_COLLECTOR)
+REGISTRY.unregister(PLATFORM_COLLECTOR)
+REGISTRY.unregister(PROCESS_COLLECTOR)
 
 class LoginFailedError(Exception):
     pass
