@@ -21,6 +21,7 @@ class EndpointDataFetchError(Exception):
 ZTE_HOSTNAME = os.environ.get('ZTE_HOSTNAME', 'http://192.168.0.1')
 ZTE_PASSWORD = os.environ.get('ZTE_PASSWORD')
 REFRESH_INTERVAL = int(os.environ.get('REFRESH_INTERVAL', '10'))
+HAS_WIFI = os.environ.get('HAS_WIFI', 'True') in ['True', 'true', '1', 'Yes', 'yes']
 
 metrics = {
     'puknumber': Gauge('puknumber', 'PUK number'),
@@ -127,6 +128,12 @@ metrics = {
     'wifi_sta_connection': Gauge('wifi_sta_connection', 'WiFi STA connection'),
 }
 
+if not HAS_WIFI:
+    for name in list(metrics.keys()):
+        if "wifi_" in name:
+            REGISTRY.unregister(metrics[name])
+            del metrics[name]
+
 cell_metrics = Gauge(
     "cell_metrics",
     "Cellular Metrics",
@@ -167,30 +174,31 @@ cell_metrics = Gauge(
         "lte_pci",
     ],
 )
-wifi_metrics = Gauge(
-    "wifi_metrics",
-    "WiFi Metrics",
-    [
-        "wifi_onoff_state",
-        "m_SSID2",
-        "wifi_chip1_ssid1_wifi_coverage",
-        "m_ssid_enable",
-        "wifi_chip1_ssid1_ssid",
-        "wifi_chip1_ssid1_auth_mode",
-        "wifi_chip1_ssid1_password_encode",
-        "wifi_chip2_ssid1_ssid",
-        "wifi_chip2_ssid1_auth_mode",
-        "wifi_chip2_ssid1_password_encode",
-        "lan_ipaddr",
-        "wlan_mac_address",
-        "LocalDomain",
-        "wifi_chip1_ssid2_ssid",
-        "wifi_chip2_ssid2_ssid",
-        "station_ip_addr",
-        "wifi_dfs_status",
-        "ap_station_mode",
-    ],
-)
+if HAS_WIFI:
+    wifi_metrics = Gauge(
+        "wifi_metrics",
+        "WiFi Metrics",
+        [
+            "wifi_onoff_state",
+            "m_SSID2",
+            "wifi_chip1_ssid1_wifi_coverage",
+            "m_ssid_enable",
+            "wifi_chip1_ssid1_ssid",
+            "wifi_chip1_ssid1_auth_mode",
+            "wifi_chip1_ssid1_password_encode",
+            "wifi_chip2_ssid1_ssid",
+            "wifi_chip2_ssid1_auth_mode",
+            "wifi_chip2_ssid1_password_encode",
+            "lan_ipaddr",
+            "wlan_mac_address",
+            "LocalDomain",
+            "wifi_chip1_ssid2_ssid",
+            "wifi_chip2_ssid2_ssid",
+            "station_ip_addr",
+            "wifi_dfs_status",
+            "ap_station_mode",
+        ],
+    )
 dev_metrics = Gauge(
     "dev_metrics",
     "Device Metrics",
@@ -213,7 +221,7 @@ dev_metrics = Gauge(
     ],
 )
 
-all_metrics = [metric for metric in metrics.values()] + [cell_metrics, wifi_metrics, dev_metrics]
+all_metrics = [metric for metric in metrics.values()] + [cell_metrics] + [wifi_metrics] if HAS_WIFI else [] + [dev_metrics]
 
 session = requests.Session()
 
@@ -351,27 +359,28 @@ def collect_data():
             lte_multi_ca_scell_info=data["lte_multi_ca_scell_info"],
             lte_pci=data["lte_pci"],
         ).set(0)
-        wifi_metrics.clear()
-        wifi_metrics.labels(
-            wifi_onoff_state=data["wifi_onoff_state"],
-            m_SSID2=data["m_SSID2"],
-            wifi_chip1_ssid1_wifi_coverage=data["wifi_chip1_ssid1_wifi_coverage"],
-            m_ssid_enable=data["m_ssid_enable"],
-            wifi_chip1_ssid1_ssid=data["wifi_chip1_ssid1_ssid"],
-            wifi_chip1_ssid1_auth_mode=data["wifi_chip1_ssid1_auth_mode"],
-            wifi_chip1_ssid1_password_encode=data["wifi_chip1_ssid1_password_encode"],
-            wifi_chip2_ssid1_ssid=data["wifi_chip2_ssid1_ssid"],
-            wifi_chip2_ssid1_auth_mode=data["wifi_chip2_ssid1_auth_mode"],
-            wifi_chip2_ssid1_password_encode=data["wifi_chip2_ssid1_password_encode"],
-            lan_ipaddr=data["lan_ipaddr"],
-            wlan_mac_address=data["wlan_mac_address"],
-            LocalDomain=data["LocalDomain"],
-            wifi_chip1_ssid2_ssid=data["wifi_chip1_ssid2_ssid"],
-            wifi_chip2_ssid2_ssid=data["wifi_chip2_ssid2_ssid"],
-            station_ip_addr=data["station_ip_addr"],
-            wifi_dfs_status=data["wifi_dfs_status"],
-            ap_station_mode=data["ap_station_mode"],
-        ).set(0)
+        if HAS_WIFI:
+            wifi_metrics.clear()
+            wifi_metrics.labels(
+                wifi_onoff_state=data["wifi_onoff_state"],
+                m_SSID2=data["m_SSID2"],
+                wifi_chip1_ssid1_wifi_coverage=data["wifi_chip1_ssid1_wifi_coverage"],
+                m_ssid_enable=data["m_ssid_enable"],
+                wifi_chip1_ssid1_ssid=data["wifi_chip1_ssid1_ssid"],
+                wifi_chip1_ssid1_auth_mode=data["wifi_chip1_ssid1_auth_mode"],
+                wifi_chip1_ssid1_password_encode=data["wifi_chip1_ssid1_password_encode"],
+                wifi_chip2_ssid1_ssid=data["wifi_chip2_ssid1_ssid"],
+                wifi_chip2_ssid1_auth_mode=data["wifi_chip2_ssid1_auth_mode"],
+                wifi_chip2_ssid1_password_encode=data["wifi_chip2_ssid1_password_encode"],
+                lan_ipaddr=data["lan_ipaddr"],
+                wlan_mac_address=data["wlan_mac_address"],
+                LocalDomain=data["LocalDomain"],
+                wifi_chip1_ssid2_ssid=data["wifi_chip1_ssid2_ssid"],
+                wifi_chip2_ssid2_ssid=data["wifi_chip2_ssid2_ssid"],
+                station_ip_addr=data["station_ip_addr"],
+                wifi_dfs_status=data["wifi_dfs_status"],
+                ap_station_mode=data["ap_station_mode"],
+            ).set(0)
         dev_metrics.clear()
         dev_metrics.labels(
             cr_version=data["cr_version"],
