@@ -287,6 +287,7 @@ def collect_data():
         login(ZTE_PASSWORD)
         data = get_data_from_endpoints()
 
+        cell_metrics.clear()
         cell_metrics.labels(
             modem_main_state=data["modem_main_state"],
             imei=data["imei"],
@@ -323,6 +324,7 @@ def collect_data():
             lte_multi_ca_scell_info=data["lte_multi_ca_scell_info"],
             lte_pci=data["lte_pci"],
         ).set(0)
+        wifi_metrics.clear()
         wifi_metrics.labels(
             wifi_onoff_state=data["wifi_onoff_state"],
             m_SSID2=data["m_SSID2"],
@@ -343,6 +345,7 @@ def collect_data():
             wifi_dfs_status=data["wifi_dfs_status"],
             ap_station_mode=data["ap_station_mode"],
         ).set(0)
+        dev_metrics.clear()
         dev_metrics.labels(
             cr_version=data["cr_version"],
             wa_version=data["wa_version"],
